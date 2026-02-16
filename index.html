@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Website Lelucon</title>
+</head>
+<body>
+
+<h2>Posting Lelucon</h2>
+
+<input type="text" id="name" placeholder="Nama"><br><br>
+<textarea id="joke" placeholder="Tulis lelucon"></textarea><br><br>
+<button onclick="postJoke()">Posting</button>
+
+<hr>
+
+<h2>Daftar Lelucon</h2>
+<div id="jokesList"></div>
+
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // 🔥 GANTI DENGAN PUNYAMU
+  const SUPABASE_URL = "https://esktafrjozqjuaxqptxd.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVza3RhZnJqb3pxanVheHFwdHhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMTQyMDcsImV4cCI6MjA4Njc5MDIwN30.NqoCsfGc8Az_DGutakVRBuAySmOtAS7DEdoFvB7VGk0";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  console.log("Supabase client created");
+
+  async function postJoke() {
+    const name = document.getElementById("name").value;
+    const joke = document.getElementById("joke").value;
+
+    if (!name || !joke) {
+      alert("Isi semua field!");
+      return;
+    }
+
+    console.log("Mengirim data...");
+
+    const { data, error } = await supabase
+      .from("jokes")
+      .insert([{ name: name, joke: joke }]);
+
+    if (error) {
+      console.error("INSERT ERROR:", error);
+      alert("Error: " + error.message);
+    } else {
+      alert("Berhasil terkirim!");
+      document.getElementById("name").value = "";
+      document.getElementById("joke").value = "";
+      loadJokes();
+    }
+  }
+
+  async function loadJokes() {
+    console.log("Mengambil data...");
+
+    const { data, error } = await supabase
+      .from("jokes")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("SELECT ERROR:", error);
+      alert("Error load: " + error.message);
+      return;
+    }
+
+    const jokesList = document.getElementById("jokesList");
+    jokesList.innerHTML = "";
+
+    data.forEach(j => {
+      jokesList.innerHTML += `
+        <div style="border:1px solid black; padding:10px; margin:10px 0;">
+          <b>${j.name}</b><br>
+          ${j.joke}<br>
+          <small>${new Date(j.created_at).toLocaleString()}</small>
+        </div>
+      `;
+    });
+  }
+
+  // Auto load saat halaman dibuka
+  loadJokes();
+</script>
+
+</body>
+</html>
